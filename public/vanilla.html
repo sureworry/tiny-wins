@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tiny wins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #14121a;
+      --surface: #1f1b28;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f4f0fa;
+      --muted: #9a92ab;
+      --accent: #c4a86a;
+      --accent-soft: rgba(196, 168, 106, 0.18);
+      --radius: 14px;
+      --safe-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: "DM Sans", system-ui, sans-serif;
+      font-optical-sizing: auto;
+      background: radial-gradient(120% 80% at 50% -10%, #2a2435 0%, var(--bg) 55%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem var(--safe-bottom);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.35rem;
+    }
+
+    .sub {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .composer {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 0.75rem 0 1rem;
+      background: linear-gradient(to bottom, var(--bg) 70%, transparent);
+    }
+
+    .row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      font: inherit;
+      font-size: 1rem;
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--muted);
+      opacity: 0.85;
+    }
+
+    input[type="text"]:focus {
+      outline: 2px solid var(--accent-soft);
+      outline-offset: 0;
+      border-color: rgba(196, 168, 106, 0.45);
+    }
+
+    button[type="submit"] {
+      border: none;
+      background: var(--accent);
+      color: #1a1510;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0 1.1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button[type="submit"]:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    button[type="submit"]:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .feed {
+      flex: 1;
+    }
+
+    .day {
+      margin-bottom: 1.5rem;
+    }
+
+    .day-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 0 0 0.6rem;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    li {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      font-size: 0.98rem;
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    li span {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .time {
+      font-size: 0.72rem;
+      color: var(--muted);
+      white-space: nowrap;
+      margin-top: 0.15rem;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+
+    .empty strong {
+      display: block;
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Tiny wins</h1>
+      <p class="sub">One line. No streak guilt. Just proof you moved.</p>
+    </header>
+
+    <form class="composer" id="form" autocomplete="off">
+      <div class="row">
+        <input
+          type="text"
+          id="text"
+          name="text"
+          maxlength="200"
+          placeholder="What counted today?"
+          enterkeyhint="done"
+          aria-label="Your win"
+        />
+        <button type="submit" id="add">Add</button>
+      </div>
+    </form>
+
+    <main class="feed" id="feed" aria-live="polite"></main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "tiny-wins:vanilla:v1";
+
+    /** @typedef {{ id: string, text: string, at: string }} Win */
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    /** @param {Win[]} wins */
+    function save(wins) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(wins));
+    }
+
+    function uid() {
+      return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    /** @param {string} iso */
+    function dayKey(iso) {
+      const d = new Date(iso);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    /** @param {string} iso */
+    function formatDayLabel(iso) {
+      const d = new Date(iso);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const sameDay = (a, b) =>
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+
+      if (sameDay(d, today)) return "Today";
+      if (sameDay(d, yesterday)) return "Yesterday";
+
+      return d.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+    }
+
+    /** @param {string} iso */
+    function formatTime(iso) {
+      return new Date(iso).toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    /** @param {Win[]} wins */
+    function groupByDay(wins) {
+      const sorted = [...wins].sort(
+        (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()
+      );
+      /** @type {Record<string, Win[]>} */
+      const map = {};
+      for (const w of sorted) {
+        const k = dayKey(w.at);
+        if (!map[k]) map[k] = [];
+        map[k].push(w);
+      }
+      return Object.entries(map).sort(([a], [b]) => (a < b ? 1 : a > b ? -1 : 0));
+    }
+
+    /** @param {Win[]} wins */
+    function render(wins) {
+      const feed = document.getElementById("feed");
+      if (!feed) return;
+
+      if (!wins.length) {
+        feed.innerHTML =
+          '<p class="empty"><strong>Nothing logged yet.</strong>Ship the tiniest version: one sentence is enough.</p>';
+        return;
+      }
+
+      const groups = groupByDay(wins);
+      feed.innerHTML = groups
+        .map(([key, items]) => {
+          const label = formatDayLabel(items[0].at);
+          const lis = items
+            .map(
+              (w) =>
+                `<li><span>${escapeHtml(w.text)}</span><span class="time">${formatTime(w.at)}</span></li>`
+            )
+            .join("");
+          return `<section class="day" data-day="${escapeHtml(key)}"><h2 class="day-label">${escapeHtml(label)}</h2><ul>${lis}</ul></section>`;
+        })
+        .join("");
+    }
+
+    function escapeHtml(s) {
+      return s
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    const form = document.getElementById("form");
+    const input = document.getElementById("text");
+    const addBtn = document.getElementById("add");
+
+    function refreshButton() {
+      if (!input || !addBtn) return;
+      addBtn.disabled = !input.value.trim();
+    }
+
+    input?.addEventListener("input", refreshButton);
+
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = input?.value.trim();
+      if (!text || !input) return;
+
+      const wins = load();
+      wins.push({ id: uid(), text, at: new Date().toISOString() });
+      save(wins);
+      input.value = "";
+      refreshButton();
+      render(wins);
+      input.focus();
+    });
+
+    refreshButton();
+    render(load());
+  </script>
+</body>
+</html>
