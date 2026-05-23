@@ -15,7 +15,7 @@ Open [http://localhost:5173/preview.html](http://localhost:5173/preview.html) fo
 
 | Version | Branch / tag | Notes |
 |---------|--------------|-------|
-| **v2** | `v2`, tag `v2` | Current — Figma UI, floating nav, list/grid logged views, 2k26 year grid |
+| **v2** | `dev`, tag `v2` | Current — Figma UI, floating nav, list/grid logged views, 2k26 year grid |
 | **v1** | tag `v1` | Original single-file prototype (`public/vanilla.html`) |
 
 See `SCOPE.md` for full spec and version history.
@@ -23,7 +23,6 @@ See `SCOPE.md` for full spec and version history.
 ## Git workflow
 
 ```
-main          ← production / shipped
-└── dev       ← staging
-    └── v2    ← current feature work
+main          ← production / shipped (tagged releases)
+└── dev       ← staging / current v2 work
 ```
